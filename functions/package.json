@@ -1,0 +1,15 @@
+{
+	"dependencies": {
+		"@rocicorp/zero": "^0.16.2025022602"
+	},
+	"name": "functions",
+	"private": true,
+	"scripts": {
+		"check-format": "prettier --check .",
+		"check-types": "tsc",
+		"format": "prettier --write .",
+		"lint": "eslint --ext .ts,.tsx,.js,.jsx src/"
+	},
+	"type": "module",
+	"version": "0.0.0"
+}

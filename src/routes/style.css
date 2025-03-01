@@ -1,0 +1,116 @@
+/* 1. Use a more-intuitive box-sizing model */
+:root {
+	/* Enable light/dark mode support */
+	color-scheme: light dark;
+
+	/* Color System */
+
+	/* Primary Colors */
+	--primary: #5150ff;
+	--primary-dark: #0056b3;
+	--color-primary: #ff5876;
+
+	/* Neutral Colors */
+	--bg: #ffffff;
+	--bg-light: #f1f1f1;
+	--bg-lighter: #f3f4f6;
+	--border: #ccc;
+	--text: #333333;
+	--text-dark: #111827;
+
+	/* Utility Colors */
+	--shadow: rgba(0, 0, 0, 0.1);
+}
+
+@media (prefers-color-scheme: dark) {
+	:root {
+		/* Primary Colors - slightly adjusted for dark mode */
+		--primary: #5150ff;
+		--primary-dark: #0077e6;
+		--color-primary: #ff5876;
+
+		/* Neutral Colors - dark variants */
+		--bg: #121212;
+		--bg-light: #1e1e1e;
+		--bg-lighter: #2d2d2d;
+		--border: #444;
+		--text: #e1e1e1;
+		--text-dark: #f3f4f6;
+
+		/* Utility Colors */
+		--shadow: rgba(0, 0, 0, 0.3);
+	}
+}
+
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+}
+
+/* 2. Remove default margin */
+* {
+	margin: 0;
+}
+
+body {
+	overflow: hidden;
+	/* 3. Add accessible line-height */
+	line-height: 1.5;
+	/* 4. Improve text rendering */
+	-webkit-font-smoothing: antialiased;
+	font-family:
+		-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+	background-color: var(--bg);
+	color: var(--text);
+}
+
+/* 5. Improve media defaults */
+img,
+picture,
+video,
+canvas,
+svg {
+	display: block;
+	max-width: 100%;
+}
+
+/* 6. Inherit fonts for form controls */
+input,
+button,
+textarea,
+select {
+	font: inherit;
+}
+
+/* 7. Avoid text overflows */
+p,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+	overflow-wrap: break-word;
+}
+
+/* 8. Improve line wrapping */
+p {
+	text-wrap: pretty;
+}
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+	text-wrap: balance;
+}
+
+/*
+  9. Create a root stacking context
+*/
+#root,
+#__next {
+	isolation: isolate;
+}
