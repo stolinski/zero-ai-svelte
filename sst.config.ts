@@ -60,14 +60,13 @@ export default $config({
 			},
 			dev: {
 				username: 'scotttolinski',
-				password: 'robotops',
+				password: process.env.DEV_DB_PW,
 				database: 'svelte_ai',
 				host: '127.0.0.1',
 				port: 5432
 			}
 		});
 		const DB_CONNECTION_STRING = $interpolate`postgresql://${database.username}:${database.password}@${database.host}:${database.port}/${database.database}`;
-		console.log('DB_CONNECTION_STRING', DB_CONNECTION_STRING);
 
 		// Common environment variables
 		const commonEnv = {

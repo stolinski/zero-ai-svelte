@@ -30,6 +30,7 @@
 		z.current.mutate.messages.insert({
 			id: nanoid(),
 			chatId,
+			userId: z.current.userID,
 			content: user_input.value,
 			isComplete: true,
 			createdAt: Date.now(),
@@ -85,23 +86,6 @@
 
 	<section class="chat-section">
 		{@render children()}
-
-		<div class="chat-container">
-			<form onsubmit={(e) => e.preventDefault()}>
-				<input
-					{disabled}
-					bind:value={user_input.value}
-					type="text"
-					placeholder="Type your message..."
-					class="chat-input"
-				/>
-				{#if disabled}
-					<button>Regenerate</button>
-				{:else}
-					<button {disabled} onclick={save_chat} class="chat-submit">Send</button>
-				{/if}
-			</form>
-		</div>
 	</section>
 </div>
 
@@ -113,41 +97,6 @@
 	}
 
 	.chat-section {
-		display: grid;
-		grid-template-rows: 90vh 20vh;
 		background-color: var(--bg);
-	}
-
-	.chat-container {
-		align-items: center;
-		padding: 10px;
-		height: 100%;
-		margin-top: auto;
-		form {
-			display: flex;
-		}
-	}
-
-	.chat-input {
-		flex: 1;
-		padding: 10px;
-		border: 1px solid var(--border);
-		border-radius: 4px;
-		margin-right: 10px;
-		background-color: var(--bg-lighter);
-		color: var(--text);
-	}
-
-	.chat-submit {
-		padding: 10px 20px;
-		background-color: var(--primary);
-		color: white;
-		border: none;
-		border-radius: 4px;
-		cursor: pointer;
-	}
-
-	.chat-submit:hover {
-		background-color: var(--primary-dark);
 	}
 </style>

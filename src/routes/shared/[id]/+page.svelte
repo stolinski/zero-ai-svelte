@@ -3,25 +3,23 @@
 	import { z } from '$lib/z.svelte';
 	import { Query } from 'zero-svelte';
 	import ChatWindow from '$lib/components/ChatWindow.svelte';
-	import ShareButton from '$lib/components/ShareButton.svelte';
 
-	const chatId = $derived(page.params.id);
-	const chat = $derived(new Query(z.current.query.chats.where('id', chatId).one()));
+	const shareId = $derived(page.params.id);
+	const chat = $derived(new Query(z.current.query.chats.where('shareId', shareId).one()));
 	const isLoading = $derived(!chat?.current);
 	const isNotFound = $derived(chat?.current === null);
 </script>
 
 {#if isLoading}
-	<div class="loading">Loading chat...</div>
+	<div class="loading">Loading shared chat...</div>
 {:else if isNotFound}
 	<div class="not-found">
 		<h1>Chat not found</h1>
-		<p>This chat may have been deleted or is not accessible.</p>
+		<p>This chat may have been deleted or the share link may be invalid.</p>
 	</div>
 {:else if chat?.current}
 	<div class="chat-container">
-		<ShareButton {chatId} />
-		<ChatWindow {chatId} isOwner={true} />
+		<ChatWindow chatId={chat.current.id} isOwner={false} />
 	</div>
 {/if}
 

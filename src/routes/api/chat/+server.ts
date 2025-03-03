@@ -118,9 +118,17 @@ export const POST: RequestHandler = async ({ request }) => {
 							} else if (paragraphCount === 0) {
 								// If there were no paragraphs at all, insert the complete response
 								await query(
-									`INSERT INTO messages (id, chat_id, role, content, is_complete, created_at, updated_at) 
-									 VALUES ($1, $2, $3, $4, $5, ${timestamp}, ${timestamp})`,
-									[messageId, chatId, 'assistant', completeAIResponse, true]
+									`INSERT INTO messages (id, chat_id, user_id, role, content, is_complete, created_at, updated_at) 
+									 VALUES ($1, $2, $3, $4, $5, $6, ${timestamp}, ${timestamp})`,
+									[
+										messageId,
+										chatId,
+										(await query('SELECT user_id FROM chats WHERE id = $1', [chatId])).rows[0]
+											.user_id,
+										'assistant',
+										completeAIResponse,
+										true
+									]
 								);
 							}
 
@@ -145,9 +153,17 @@ export const POST: RequestHandler = async ({ request }) => {
 							if (paragraphCount === 1) {
 								// First paragraph - insert new record
 								await query(
-									`INSERT INTO messages (id, chat_id, role, content, is_complete, created_at, updated_at) 
-									 VALUES ($1, $2, $3, $4, $5, ${timestamp}, CURRENT_TIMESTAMP)`,
-									[messageId, chatId, 'assistant', completeAIResponse, false]
+									`INSERT INTO messages (id, chat_id, user_id, role, content, is_complete, created_at, updated_at) 
+									 VALUES ($1, $2, $3, $4, $5, $6, ${timestamp}, CURRENT_TIMESTAMP)`,
+									[
+										messageId,
+										chatId,
+										(await query('SELECT user_id FROM chats WHERE id = $1', [chatId])).rows[0]
+											.user_id,
+										'assistant',
+										completeAIResponse,
+										false
+									]
 								);
 							} else {
 								// Update existing record with accumulated content

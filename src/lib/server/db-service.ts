@@ -76,6 +76,7 @@ export async function getChat(chatId: string): Promise<Chat | null> {
  */
 export async function updateChatTitle(chatId: string, title: string): Promise<void> {
 	const now = Date.now();
+	console.log('UPDATE_CHAT TITELE');
 	await query('UPDATE chats SET title = $1, updated_at = $2 WHERE id = $3', [
 		title,
 		new Date(now),
@@ -153,6 +154,7 @@ export async function createMessage(
 	content: string,
 	isComplete = true
 ): Promise<Message> {
+	console.log('CREATE_MESSAGE');
 	const messageId = nanoid();
 	const now = Date.now();
 

@@ -6,39 +6,41 @@
 	/* Color System */
 
 	/* Primary Colors */
-	--primary: #5150ff;
-	--primary-dark: #0056b3;
-	--color-primary: #ff5876;
+	--primary: rgb(81 80 255 / 1);
+	--primary-dark: rgb(0 86 179 / 1);
+	--color-primary: rgb(255 88 118 / 1);
+	--color-secondary: #ffa515;
 
 	/* Neutral Colors */
-	--bg: #ffffff;
-	--bg-light: #f1f1f1;
-	--bg-lighter: #f3f4f6;
-	--border: #ccc;
-	--text: #333333;
-	--text-dark: #111827;
+	--bg: rgb(255 255 255 / 1);
+	--bg-light: rgb(241 241 241 / 1);
+	--bg-lighter: rgb(243 244 246 / 1);
+	--border: rgb(204 204 204 / 1);
+	--text: rgb(51 51 51 / 1);
+	--text-dark: rgb(17 24 39 / 1);
 
 	/* Utility Colors */
-	--shadow: rgba(0, 0, 0, 0.1);
+	--shadow: rgb(0 0 0 / 0.1);
 }
 
 @media (prefers-color-scheme: dark) {
 	:root {
 		/* Primary Colors - slightly adjusted for dark mode */
-		--primary: #5150ff;
-		--primary-dark: #0077e6;
-		--color-primary: #ff5876;
+		--primary: rgb(81 80 255 / 1);
+		--primary-dark: rgb(0 119 230 / 1);
+		--color-primary: rgb(255 88 118 / 1);
+		--color-secondary: #ffa515;
 
 		/* Neutral Colors - dark variants */
-		--bg: #121212;
-		--bg-light: #1e1e1e;
-		--bg-lighter: #2d2d2d;
-		--border: #444;
-		--text: #e1e1e1;
-		--text-dark: #f3f4f6;
+		--bg: rgb(18 18 18 / 1);
+		--bg-light: rgb(30 30 30 / 1);
+		--bg-lighter: rgb(45 45 45 / 1);
+		--border: var(--bg-light);
+		--text: rgb(225 225 225 / 1);
+		--text-dark: rgb(243 244 246 / 1);
 
 		/* Utility Colors */
-		--shadow: rgba(0, 0, 0, 0.3);
+		--shadow: rgb(0 0 0 / 0.3);
 	}
 }
 
@@ -113,4 +115,9 @@ h6 {
 #root,
 #__next {
 	isolation: isolate;
+}
+
+button {
+	font-weight: bold;
+	box-shadow: 1px 1px 3px rgb(0 0 0 / 0.3);
 }

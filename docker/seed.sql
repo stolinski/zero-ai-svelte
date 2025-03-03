@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS chats (
 CREATE TABLE IF NOT EXISTS messages (
   id TEXT PRIMARY KEY,
   chat_id TEXT NOT NULL,
+  user_id TEXT NOT NULL, -- Added user_id field
   role TEXT NOT NULL CHECK (role IN ('user', 'assistant', 'system')),
   content TEXT NOT NULL,
   is_complete BOOLEAN NOT NULL DEFAULT FALSE,
@@ -25,6 +26,7 @@ CREATE TABLE IF NOT EXISTS messages (
 -- Index for faster chat filtering
 CREATE INDEX IF NOT EXISTS idx_chats_user_id ON chats(user_id);
 CREATE INDEX IF NOT EXISTS idx_messages_chat_id ON messages(chat_id);
+CREATE INDEX IF NOT EXISTS idx_messages_user_id ON messages(user_id);
 
 -- Index for sharing
 CREATE INDEX IF NOT EXISTS idx_chats_share_id ON chats(share_id);
