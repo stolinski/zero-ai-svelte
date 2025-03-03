@@ -18,13 +18,23 @@ export const POST: RequestHandler = async ({ request }) => {
 		}
 
 		// Get current chat data to check title and message count
-		const chatResult = await query('SELECT title FROM chats WHERE id = $1', [chatId]);
+		const chatResult = await query(
+			'SELECT title, user_id, is_shared, share_mode FROM chats WHERE id = $1',
+			[chatId]
+		);
 
 		if (chatResult.rows.length === 0) {
 			return json({ error: 'Chat not found' }, { status: 404 });
 		}
 
-		const chatTitle = chatResult.rows[0].title;
+		const chat = chatResult.rows[0];
+
+		// Check if this is a shared chat and if the user has write permission
+		if (chat.is_shared && chat.share_mode === 'read') {
+			return json({ error: 'This chat is read-only' }, { status: 403 });
+		}
+
+		const chatTitle = chat.title;
 
 		// Get all messages for this chat
 		const messagesResult = await query(

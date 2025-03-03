@@ -188,7 +188,7 @@
 	.send-button {
 		padding: 0.75rem 2.5rem;
 		background-color: var(--primary);
-		font-size: 20px;
+		font-size: 18px;
 		color: white;
 		border: none;
 		cursor: pointer;
