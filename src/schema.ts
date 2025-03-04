@@ -73,74 +73,70 @@ export type Schema = typeof schema;
 export type Message = Row<typeof schema.tables.messages>;
 export type Chat = Row<typeof schema.tables.chats>;
 
-// Creating a type to help with proper typing of the join callbacks
-type ChatQuery = {
-	userId: string;
-	isShared: boolean;
-	shareMode: string;
-};
+// Define reusable permission functions
+const allowIfChatOwner = (authData: AuthData, { cmp }: ExpressionBuilder<Schema, 'chats'>) =>
+	cmp('userId', '=', authData.sub);
+
+const allowIfChatSharedReadable = (
+	authData: AuthData,
+	{ cmp, and, or }: ExpressionBuilder<Schema, 'chats'>
+) =>
+	and(
+		cmp('isShared', '=', true),
+		or(cmp('shareMode', '=', 'read'), cmp('shareMode', '=', 'write'))
+	);
+
+const allowIfMessageOwner = (authData: AuthData, { cmp }: ExpressionBuilder<Schema, 'messages'>) =>
+	cmp('userId', '=', authData.sub);
+
+const allowIfInWritableChat = (
+	authData: AuthData,
+	{ exists }: ExpressionBuilder<Schema, 'messages'>
+) => exists('chat', (q) => q.where('isShared', true).where('shareMode', 'write'));
+
+const ensureUserIdMatches = (
+	authData: AuthData,
+	{ cmp }: ExpressionBuilder<Schema, 'chats'>,
+	row: Row<Schema['tables']['chats']>
+) => cmp('userId', '=', authData.sub);
+
+const ensureMessageUserIdMatches = (
+	authData: AuthData,
+	{ cmp }: ExpressionBuilder<Schema, 'messages'>,
+	row: Row<Schema['tables']['messages']>
+) => cmp('userId', '=', authData.sub);
 
 export const permissions = definePermissions<AuthData, Schema>(schema, () => {
-	// Uncomment and implement permission functions
-	const allowIfChatOwner = (authData: AuthData, { cmp }: ExpressionBuilder<Schema, 'chats'>) => {
-		return cmp('userId', '=', authData.sub);
-	};
-
-	// Allow if the user has read access via sharing
-	const allowIfChatSharedReadable = (
-		_authData: AuthData,
-		{ cmp, and, or }: ExpressionBuilder<Schema, 'chats'>
-	) => {
-		return and(
-			cmp('isShared', '=', true),
-			or(cmp('shareMode', '=', 'read'), cmp('shareMode', '=', 'write'))
-		);
-	};
-
-	// Allow if the user has write access via sharing
-	const allowIfChatSharedWritable = (
-		_authData: AuthData,
-		{ cmp, and }: ExpressionBuilder<Schema, 'chats'>
-	) => {
-		return and(cmp('isShared', '=', true), cmp('shareMode', '=', 'write'));
-	};
-
-	// Allow if the message belongs to a chat that is shared with write access
-	const allowIfMessageInWritableSharedChat = (
-		_authData: AuthData,
-		eb: ExpressionBuilder<Schema, 'messages'>
-	) => {
-		// We're using any here as a workaround for the type issues
-		return (eb as any).join(
-			'chat',
-			(q: ChatQuery) => q.isShared === true && q.shareMode === 'write'
-		);
-	};
-
-	// We'll use explicit permissions using ANYONE_CAN for now to avoid TypeScript errors
-	// You can adjust these permissions once you've fixed the TypeScript issues
-	// return {
-	// 	chats: {
-	// 		row: {
-	// 			select: ANYONE_CAN,
-	// 			insert: ANYONE_CAN,
-	// 			update: ANYONE_CAN,
-	// 			delete: ANYONE_CAN
-	// 		}
-	// 	},
-	// 	messages: {
-	// 		row: {
-	// 			select: ANYONE_CAN,
-	// 			insert: ANYONE_CAN,
-	// 			update: ANYONE_CAN,
-	// 			delete: ANYONE_CAN
-	// 		}
-	// 	}
-	// } as PermissionsConfig<AuthData, Schema>;
 	return {
-		chats: ANYONE_CAN_DO_ANYTHING,
-		messages: ANYONE_CAN_DO_ANYTHING
-	} as PermissionsConfig<AuthData, Schema>;
+		chats: {
+			row: {
+				select: [allowIfChatOwner, allowIfChatSharedReadable],
+				insert: [ensureUserIdMatches],
+				update: {
+					preMutation: [allowIfChatOwner],
+					postMutation: [
+						(authData: AuthData, eb: ExpressionBuilder<Schema, 'chats'>) =>
+							eb.cmp('userId', '=', authData.sub)
+					]
+				},
+				delete: [allowIfChatOwner]
+			}
+		},
+		messages: {
+			row: {
+				select: [allowIfMessageOwner, allowIfInWritableChat],
+				insert: [ensureMessageUserIdMatches, allowIfInWritableChat],
+				update: {
+					preMutation: [allowIfMessageOwner],
+					postMutation: [
+						(authData: AuthData, eb: ExpressionBuilder<Schema, 'messages'>) =>
+							eb.cmp('userId', '=', authData.sub)
+					]
+				},
+				delete: [allowIfMessageOwner]
+			}
+		}
+	};
 });
 
 export default {

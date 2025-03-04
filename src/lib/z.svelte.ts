@@ -24,7 +24,10 @@ export function get_z_options() {
 	return {
 		userID: user.id ?? 'anon',
 		server: PUBLIC_SERVER,
-		schema
+		schema,
+		auth: () => {
+			return JSON.stringify({ sub: user.id });
+		}
 	} as const;
 }
 
