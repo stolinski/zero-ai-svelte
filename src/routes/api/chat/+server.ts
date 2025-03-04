@@ -10,7 +10,7 @@ import { query } from '$lib/server/db';
  */
 export const POST: RequestHandler = async ({ request }) => {
 	try {
-		const { chatId } = await request.json();
+		const { chatId, userId } = await request.json();
 
 		// Validate request
 		if (!chatId) {
@@ -30,7 +30,8 @@ export const POST: RequestHandler = async ({ request }) => {
 		const chat = chatResult.rows[0];
 
 		// Check if this is a shared chat and if the user has write permission
-		if (chat.is_shared && chat.share_mode === 'read') {
+		// Only apply read-only restriction to non-owners
+		if (chat.is_shared && chat.share_mode === 'read' && userId !== chat.user_id) {
 			return json({ error: 'This chat is read-only' }, { status: 403 });
 		}
 
@@ -89,12 +90,14 @@ export const POST: RequestHandler = async ({ request }) => {
 				try {
 					// Get streaming response from AI
 					const aiStream = await streamingChatCompletion(messageHistory);
+					console.log('AI stream started');
 
 					// For collecting the partial AI response until we get a paragraph
 					let currentParagraph = '';
 					let completeAIResponse = '';
 					let messageId = crypto.randomUUID(); // One message ID for all paragraphs
 					let paragraphCount = 0;
+					let messageCreated = false;
 
 					// Set up a reader to process the stream
 					const reader = aiStream.getReader();
@@ -116,33 +119,39 @@ export const POST: RequestHandler = async ({ request }) => {
 						const { done, value } = await reader.read();
 
 						if (done) {
-							// If there's any remaining content, save it as the final paragraph
-							if (currentParagraph.trim() !== '') {
-								completeAIResponse += currentParagraph;
-								// Update the final paragraph and mark it as complete
+							console.log('Stream done, saving final content:', {
+								hasRemainingContent: currentParagraph.trim() !== '',
+								paragraphCount,
+								messageCreated
+							});
+
+							if (!messageCreated) {
+								// No message was created yet, create one with the complete response
+								console.log('Creating final message:', {
+									messageId,
+									chatId,
+									userId,
+									content: completeAIResponse
+								});
+								await query(
+									`INSERT INTO messages (id, chat_id, user_id, role, content, is_complete, created_at, updated_at) 
+									 VALUES ($1, $2, $3, $4, $5, $6, ${timestamp}, ${timestamp})`,
+									[messageId, chatId, userId, 'assistant', completeAIResponse, true]
+								);
+							} else {
+								// Update the existing message with any remaining content and mark as complete
+								console.log('Updating final message:', {
+									messageId,
+									content: completeAIResponse
+								});
 								await query(
 									`UPDATE messages SET content = $1, is_complete = TRUE, updated_at = CURRENT_TIMESTAMP
 									 WHERE id = $2`,
 									[completeAIResponse, messageId]
 								);
-							} else if (paragraphCount === 0) {
-								// If there were no paragraphs at all, insert the complete response
-								await query(
-									`INSERT INTO messages (id, chat_id, user_id, role, content, is_complete, created_at, updated_at) 
-									 VALUES ($1, $2, $3, $4, $5, $6, ${timestamp}, ${timestamp})`,
-									[
-										messageId,
-										chatId,
-										(await query('SELECT user_id FROM chats WHERE id = $1', [chatId])).rows[0]
-											.user_id,
-										'assistant',
-										completeAIResponse,
-										true
-									]
-								);
 							}
 
-							// Update only the timestamp - title is already handled
+							// Update chat timestamp
 							await query('UPDATE chats SET updated_at = CURRENT_TIMESTAMP WHERE id = $1', [
 								chatId
 							]);
@@ -159,24 +168,34 @@ export const POST: RequestHandler = async ({ request }) => {
 						// Check if we have a paragraph (approximately)
 						if (chunk.includes('\n\n') || currentParagraph.length > 300) {
 							paragraphCount++;
+							console.log('Processing paragraph:', {
+								paragraphCount,
+								messageId,
+								currentLength: currentParagraph.length,
+								isNewParagraph: chunk.includes('\n\n'),
+								messageCreated
+							});
 
-							if (paragraphCount === 1) {
-								// First paragraph - insert new record
+							if (!messageCreated) {
+								// First time - insert new record
+								console.log('Creating first message:', {
+									messageId,
+									chatId,
+									userId,
+									content: completeAIResponse
+								});
 								await query(
 									`INSERT INTO messages (id, chat_id, user_id, role, content, is_complete, created_at, updated_at) 
 									 VALUES ($1, $2, $3, $4, $5, $6, ${timestamp}, CURRENT_TIMESTAMP)`,
-									[
-										messageId,
-										chatId,
-										(await query('SELECT user_id FROM chats WHERE id = $1', [chatId])).rows[0]
-											.user_id,
-										'assistant',
-										completeAIResponse,
-										false
-									]
+									[messageId, chatId, userId, 'assistant', completeAIResponse, false]
 								);
+								messageCreated = true;
 							} else {
 								// Update existing record with accumulated content
+								console.log('Updating existing message:', {
+									messageId,
+									content: completeAIResponse
+								});
 								await query(
 									`UPDATE messages SET content = $1, updated_at = CURRENT_TIMESTAMP
 									 WHERE id = $2`,

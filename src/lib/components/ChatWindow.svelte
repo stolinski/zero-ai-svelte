@@ -47,7 +47,8 @@
 					'Content-Type': 'application/json'
 				},
 				body: JSON.stringify({
-					chatId: chat.current.id
+					chatId: chat.current.id,
+					userId: z.current.userID
 				})
 			}).catch((error) => {
 				console.error('Error:', error);

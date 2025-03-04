@@ -89,49 +89,36 @@ const allowIfChatSharedReadable = (
 const allowIfMessageOwner = (authData: AuthData, { cmp }: ExpressionBuilder<Schema, 'messages'>) =>
 	cmp('userId', '=', authData.sub);
 
+const allowIfReadbleChat = (
+	authData: AuthData,
+	{ exists }: ExpressionBuilder<Schema, 'messages'>
+) => exists('chat', (q) => q.where('isShared', true));
+
 const allowIfInWritableChat = (
 	authData: AuthData,
 	{ exists }: ExpressionBuilder<Schema, 'messages'>
 ) => exists('chat', (q) => q.where('isShared', true).where('shareMode', 'write'));
-
-const ensureUserIdMatches = (
-	authData: AuthData,
-	{ cmp }: ExpressionBuilder<Schema, 'chats'>,
-	row: Row<Schema['tables']['chats']>
-) => cmp('userId', '=', authData.sub);
-
-const ensureMessageUserIdMatches = (
-	authData: AuthData,
-	{ cmp }: ExpressionBuilder<Schema, 'messages'>,
-	row: Row<Schema['tables']['messages']>
-) => cmp('userId', '=', authData.sub);
 
 export const permissions = definePermissions<AuthData, Schema>(schema, () => {
 	return {
 		chats: {
 			row: {
 				select: [allowIfChatOwner, allowIfChatSharedReadable],
-				insert: [ensureUserIdMatches],
+				insert: [(authData, eb, row) => eb.cmp('userId', '=', row.userId)],
 				update: {
 					preMutation: [allowIfChatOwner],
-					postMutation: [
-						(authData: AuthData, eb: ExpressionBuilder<Schema, 'chats'>) =>
-							eb.cmp('userId', '=', authData.sub)
-					]
+					postMutation: [(authData, eb, row, prev) => eb.cmp('userId', '=', prev.userId)]
 				},
 				delete: [allowIfChatOwner]
 			}
 		},
 		messages: {
 			row: {
-				select: [allowIfMessageOwner, allowIfInWritableChat],
-				insert: [ensureMessageUserIdMatches, allowIfInWritableChat],
+				select: [allowIfMessageOwner, allowIfReadbleChat],
+				insert: [(authData, eb, row) => eb.cmp('userId', '=', row.userId), allowIfInWritableChat],
 				update: {
 					preMutation: [allowIfMessageOwner],
-					postMutation: [
-						(authData: AuthData, eb: ExpressionBuilder<Schema, 'messages'>) =>
-							eb.cmp('userId', '=', authData.sub)
-					]
+					postMutation: [(authData, eb, row, prev) => eb.cmp('userId', '=', prev.userId)]
 				},
 				delete: [allowIfMessageOwner]
 			}
